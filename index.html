@@ -70,6 +70,8 @@
 <div id="vr-container"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/loaders/GLTFLoader.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/webxr/VRButton.js"></script>
 <script>
     // Access camera feed for the background
     const video = document.getElementById('camera-feed');
@@ -101,10 +103,7 @@
 
         // Allow model rotation via dragging
         let isDragging = false;
-        let previousMousePosition = {
-            x: 0,
-            y: 0
-        };
+        let previousMousePosition = { x: 0, y: 0 };
 
         document.addEventListener('mousedown', (event) => {
             isDragging = true;
@@ -126,10 +125,7 @@
                 model.rotation.x += deltaMove.y * rotationSpeed;
             }
 
-            previousMousePosition = {
-                x: event.offsetX,
-                y: event.offsetY
-            };
+            previousMousePosition = { x: event.offsetX, y: event.offsetY };
         });
     }, undefined, (error) => {
         console.error(error);
@@ -139,7 +135,7 @@
 
     // Animation loop
     function animate() {
-        requestAnimationFrame(animate);
+        renderer.setAnimationLoop(animate); // Use WebXR's animation loop
         renderer.render(scene, camera);
     }
     animate();
@@ -150,6 +146,24 @@
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
+
+    // Initialize WebXR and request immersive VR session
+    if (navigator.xr) {
+        navigator.xr.requestSession('immersive-vr').then(onSessionStarted);
+    }
+
+    function onSessionStarted(session) {
+        session.addEventListener('end', onSessionEnded);
+        renderer.xr.enabled = true;
+        renderer.xr.setSession(session);
+    }
+
+    function onSessionEnded() {
+        console.log('WebXR session ended');
+    }
+
+    // Enable VR button (if available)
+    document.body.appendChild(THREE.VRButton.createButton(renderer));
 </script>
 
 </body>
