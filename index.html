@@ -81,9 +81,13 @@
                 video.srcObject = stream;
                 video.play();
             })
-            .catch(err => console.error("Camera access error:", err));
+            .catch(err => {
+                console.error("Camera access error:", err);
+                alert("Camera access is required for this VR experience.");
+            });
     } else {
         console.error("getUserMedia not supported in this browser.");
+        alert("Camera access is not supported in this browser.");
     }
 
     // Initialize Three.js scene
@@ -149,13 +153,21 @@
 
     // Initialize WebXR and request immersive VR session
     if (navigator.xr) {
-        navigator.xr.requestSession('immersive-vr').then(onSessionStarted);
+        navigator.xr.requestSession('immersive-vr').then(onSessionStarted)
+            .catch(err => console.error("Failed to start XR session: ", err));
     }
 
     function onSessionStarted(session) {
         session.addEventListener('end', onSessionEnded);
         renderer.xr.enabled = true;
         renderer.xr.setSession(session);
+
+        // Ensure WebXR camera feed is linked to the session
+        const gl = renderer.getContext();
+        const xrReferenceSpace = session.requestReferenceSpace('local');
+        session.requestHitTestSource({ space: xrReferenceSpace }).then(hitTestSource => {
+            console.log('Hit test source created', hitTestSource);
+        });
     }
 
     function onSessionEnded() {
